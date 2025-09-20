@@ -1,38 +1,37 @@
-# 1. Use official PHP 8.3 FPM image
+# 1. Base image
 FROM php:8.3-fpm
 
-# 2. Install system dependencies and PHP extensions
+# 2. Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
     libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql pdo_mysql zip gd bcmath mbstring exif pcntl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 3. Install Composer (official installer)
+# 3. Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # 4. Set working directory
 WORKDIR /var/www/html
 
-# 5. Copy Laravel project files
+# 5. Copy project files
 COPY . .
 
-# 6. Install PHP dependencies (production only)
+# 6. Install PHP dependencies for production
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 7. Laravel optimizations
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-
-# 8. Set permissions (very important for storage & bootstrap cache)
+# 7. Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 9. Expose port 9000 for PHP-FPM
-EXPOSE 9000
+# 8. Expose port 8080 (Railway default)
+EXPOSE 8080
 
-CMD ["php-fpm"]
+# 9. Set the entrypoint command
+CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php-fpm"]
