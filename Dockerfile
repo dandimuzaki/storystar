@@ -1,34 +1,38 @@
-# 1. Use official PHP with extensions
+# 1. Use official PHP 8.3 FPM image
 FROM php:8.3-fpm
 
-# Install system dependencies
+# 2. Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev libzip-dev libpng-dev libonig-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring zip exif pcntl bcmath gd
+    git \
+    unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
 
-# Install Composer
+# 3. Install Composer (official installer)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
+# 4. Set working directory
 WORKDIR /var/www/html
 
-# Copy files
+# 5. Copy Laravel project files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-interaction --no-scripts --optimize-autoloader
+# 6. Install PHP dependencies (production only)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Optimize Laravel
-#RUN php artisan config:clear \
-# && php artisan route:clear \
-# && php artisan view:clear \
-# && php artisan cache:clear \
-# && php artisan config:cache \
-# && php artisan route:cache \
-# && php artisan view:cache
+# 7. Laravel optimizations
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
-# Expose port
-EXPOSE 8080
+# 8. Set permissions (very important for storage & bootstrap cache)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Start Laravel server
-CMD php artisan serve --host=0.0.0.0 --port=8080
+# 9. Expose port 9000 for PHP-FPM
+EXPOSE 9000
+
+CMD ["php-fpm"]
