@@ -1,7 +1,10 @@
-# 1. Base image
+# Stage 0: Build PHP + dependencies
 FROM php:8.3-fpm
 
-# 2. Install system dependencies
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -15,23 +18,21 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql zip gd bcmath mbstring exif pcntl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 3. Install Composer
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# 4. Set working directory
-WORKDIR /var/www/html
-
-# 5. Copy project files
+# Copy project files
 COPY . .
 
-# 6. Install PHP dependencies for production
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install PHP dependencies without running scripts (prevents SQLite errors)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# 7. Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Set permissions for Laravel (optional, adjust if needed)
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Expose port 8080 (Railway default)
+# Expose port
 EXPOSE 8080
 
-# 9. Set the entrypoint command
+# Run Laravel at container start: migrate, cache, then PHP-FPM
 CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php-fpm"]
