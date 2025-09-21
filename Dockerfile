@@ -1,14 +1,13 @@
 # ---------- Stage 1: Node + Vite build ----------
     FROM node:20-alpine as vite-build
 
-    # Set working directory
     WORKDIR /app
     
     # Copy package files and install dependencies
     COPY package*.json ./
     RUN npm install
     
-    # Copy the rest of the code and build assets
+    # Copy the rest of the source and build assets
     COPY . .
     RUN npm run build
     
@@ -27,29 +26,5 @@
         libzip-dev \
         icu-dev \
         postgresql-dev \
-        && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
+        && docker-php-ext-install pdo pdo_pgsql intl zip ex_
     
-    # Install Composer
-    COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-    
-    # Set working directory
-    WORKDIR /var/www/html
-    
-    # Copy Laravel files
-    COPY . .
-    
-    # Copy built frontend assets from the first stage
-    COPY --from=frontend /app /config/resources
-    
-    # Install PHP dependencies
-    RUN composer install --no-dev --optimize-autoloader
-    
-    # Set permissions for storage & bootstrap/cache
-    RUN chown -R www-data:www-data storage bootstrap/cache \
-        && chmod -R 775 storage bootstrap/cache
-    
-    # Expose port 9000 for PHP-FPM
-    EXPOSE 9000    
-
-# Start Laravel server on 0.0.0.0:9000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
