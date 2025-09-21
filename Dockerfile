@@ -36,7 +36,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy everything including built assets from previous stage
-COPY --from=frontend /app /resources
+COPY --from=frontend /app /var/www/html /resources
 
 # Copy project files
 COPY . .
