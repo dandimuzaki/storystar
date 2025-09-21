@@ -39,8 +39,8 @@
     RUN chown -R www-data:www-data storage bootstrap/cache \
         && chmod -R 775 storage bootstrap/cache
     
-    EXPOSE 8080
+    EXPOSE 9000
     
     # ✅ Run with artisan serve on port 8080 (matches Railway default)
-    CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+    CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
     
