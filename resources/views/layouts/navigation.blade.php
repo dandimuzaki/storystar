@@ -10,6 +10,7 @@
             </div>
 
             <form class="flex-1" method="get" action="{{ route('result') }}">
+                @csrf
                 <div class="flex w-full">
                     <input placeholder="Search post or user" id="search" class="rounded-l-lg py-1 w-full"
                         type="text" name="search" />

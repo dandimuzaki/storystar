@@ -1,14 +1,15 @@
 # ---------- Stage 1: Node + Vite build ----------
-    FROM node:20-alpine as vite-build
+    FROM node:20-alpine AS vite-build
 
     WORKDIR /app
     COPY package*.json ./
-    RUN npm install
+    RUN npm ci
     COPY . .
     RUN npm run build
     
+    
     # ---------- Stage 2: PHP + Composer build ----------
-    FROM php:8.3-fpm-alpine as php-build
+    FROM php:8.3-fpm-alpine AS php-build
     
     RUN apk add --no-cache \
         git \
@@ -25,17 +26,17 @@
     COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
     
     WORKDIR /var/www/html
-    
-    # Copy Laravel backend
     COPY . .
     
-    # ✅ Copy built assets from vite-build stage
+    # ✅ Copy built frontend assets from vite-build
     COPY --from=vite-build /app/public/build ./public/build
     
     RUN composer install --no-dev --optimize-autoloader
+    
     RUN chown -R www-data:www-data storage bootstrap/cache \
         && chmod -R 775 storage bootstrap/cache
     
     EXPOSE 9000
+    
     CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
     
