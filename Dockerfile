@@ -9,18 +9,11 @@
     
     
     # ---------- Stage 2: PHP + Composer build ----------
-    FROM php:8.3-fpm-alpine AS php-build
+    FROM php:8.3-fpm-alpine
     
     RUN apk add --no-cache \
-        git \
-        unzip \
-        oniguruma-dev \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        libzip-dev \
-        icu-dev \
-        postgresql-dev \
+        git unzip oniguruma-dev \
+        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev postgresql-dev \
         && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
     
     COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -28,7 +21,7 @@
     WORKDIR /var/www/html
     COPY . .
     
-    # ✅ Copy built frontend assets from vite-build
+    # ✅ Copy Vite build output
     COPY --from=vite-build /app/public/build ./public/build
     
     RUN composer install --no-dev --optimize-autoloader
@@ -37,6 +30,5 @@
         && chmod -R 775 storage bootstrap/cache
     
     EXPOSE 9000
-    
     CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
     
