@@ -1,3 +1,15 @@
+# Stage 1 - Build assets
+FROM node:20 AS frontend
+WORKDIR /app
+
+# Copy only package.json first to cache deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy rest of frontend code and build
+COPY . .
+RUN npm run build
+
 # Stage 0: Build PHP + dependencies
 FROM php:8.3-fpm
 
