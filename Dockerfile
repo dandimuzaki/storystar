@@ -2,35 +2,37 @@
     FROM node:20-alpine as vite-build
 
     WORKDIR /app
-    
     COPY package*.json ./
     RUN npm install
-    
     COPY . .
     RUN npm run build
-    
     
     # ---------- Stage 2: PHP + Composer build ----------
     FROM php:8.3-fpm-alpine as php-build
     
     RUN apk add --no-cache \
-        git unzip oniguruma-dev libpng-dev libjpeg-turbo-dev \
-        freetype-dev libzip-dev icu-dev postgresql-dev \
+        git \
+        unzip \
+        oniguruma-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        icu-dev \
+        postgresql-dev \
         && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
     
     COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
     
     WORKDIR /var/www/html
+    
+    # Copy Laravel backend
     COPY . .
     
-    # ✅ Copy only built assets
+    # ✅ Copy built assets from vite-build stage
     COPY --from=vite-build /app/public/build ./public/build
     
-    # ✅ Debug step - check if manifest exists at build time
-    RUN ls -la ./public/build
-    
     RUN composer install --no-dev --optimize-autoloader
-    
     RUN chown -R www-data:www-data storage bootstrap/cache \
         && chmod -R 775 storage bootstrap/cache
     
