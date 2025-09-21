@@ -1,30 +1,27 @@
 # ---------- Stage 1: Node + Vite build ----------
-    FROM node:20-alpine as vite-build
+    FROM node:20-alpine AS vite-build
 
     WORKDIR /app
-    
     COPY package*.json ./
-    RUN npm install
-    
+    RUN npm ci
     COPY . .
-    RUN npm run build   # ✅ build production assets
+    RUN npm run build
     
     
     # ---------- Stage 2: PHP + Composer build ----------
-    FROM php:8.3-fpm-alpine as php-build
+    FROM php:8.3-fpm-alpine
     
     RUN apk add --no-cache \
-        git unzip oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev \
-        libzip-dev icu-dev postgresql-dev \
+        git unzip oniguruma-dev \
+        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev postgresql-dev \
         && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
     
     COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
     
     WORKDIR /var/www/html
-    
     COPY . .
     
-    # ✅ Copy only the built assets to public/build
+    # ✅ Copy Vite build output
     COPY --from=vite-build /app/public/build ./public/build
     
     RUN composer install --no-dev --optimize-autoloader
