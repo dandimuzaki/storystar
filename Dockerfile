@@ -39,7 +39,7 @@
     COPY . .
     
     # Copy built frontend assets from the first stage
-    COPY --from=vite-build /app/public/build ./public/build
+    COPY --from=frontend /app /config/resources
     
     # Install PHP dependencies
     RUN composer install --no-dev --optimize-autoloader
