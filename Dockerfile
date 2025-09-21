@@ -3,11 +3,9 @@
 
     WORKDIR /app
     
-    # Copy package files and install dependencies
     COPY package*.json ./
     RUN npm install
     
-    # Copy the rest of the source and build assets
     COPY . .
     RUN npm run build
     
@@ -15,16 +13,27 @@
     # ---------- Stage 2: PHP + Composer build ----------
     FROM php:8.3-fpm-alpine as php-build
     
-    # Install required PHP extensions
     RUN apk add --no-cache \
-        git \
-        unzip \
-        oniguruma-dev \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        libzip-dev \
-        icu-dev \
-        postgresql-dev \
-        && docker-php-ext-install pdo pdo_pgsql intl zip ex_
+        git unzip oniguruma-dev libpng-dev libjpeg-turbo-dev \
+        freetype-dev libzip-dev icu-dev postgresql-dev \
+        && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
+    
+    COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+    
+    WORKDIR /var/www/html
+    COPY . .
+    
+    # ✅ Copy only built assets
+    COPY --from=vite-build /app/public/build ./public/build
+    
+    # ✅ Debug step - check if manifest exists at build time
+    RUN ls -la ./public/build
+    
+    RUN composer install --no-dev --optimize-autoloader
+    
+    RUN chown -R www-data:www-data storage bootstrap/cache \
+        && chmod -R 775 storage bootstrap/cache
+    
+    EXPOSE 9000
+    CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
     
