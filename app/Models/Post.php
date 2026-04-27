@@ -22,6 +22,7 @@ class Post extends Model implements HasMedia
         'content',
         'category_id',
         'user_id',
+        'published_at',
     ];
 
     public function getSlugOptions() : SlugOptions
