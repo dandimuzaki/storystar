@@ -13,7 +13,7 @@
     
     
     # ---------- Stage 2: PHP + Composer + Laravel ----------
-    FROM php:8.3-fpm-alpine
+    FROM php:8.4-fpm-alpine
     
     # Install PHP extensions
     RUN apk add --no-cache \
