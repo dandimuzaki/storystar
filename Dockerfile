@@ -1,7 +1,4 @@
-# ---------- Stage 1: Node + Vite build ----------
-    RUN mkdir -p database \
-    && touch database/database.sqlite
-    
+# ---------- Stage 1: Node + Vite build ----------    
     FROM node:20-alpine AS vite-build
 
     WORKDIR /app
