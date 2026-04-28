@@ -1,51 +1,52 @@
 # ---------- Stage 1: Node + Vite build ----------
-FROM node:20-alpine AS vite-build
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-
-# ---------- Stage 2: PHP + Laravel ----------
-FROM php:8.4-apache
-
-WORKDIR /var/www/html
-
-RUN apt-get update && apt-get install -y \
-    git unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libxml2-dev \
-    pkg-config \
-    && docker-php-ext-configure gd \
-        --with-freetype \
-        --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-        pdo pdo_pgsql zip gd exif
-
-COPY . .
-COPY --from=vite-build /app/public/build ./public/build
-
-# ✅ CREATE SQLITE FILE HERE (correct place)
-RUN mkdir -p database \
+    RUN mkdir -p database \
     && touch database/database.sqlite
+    
+    FROM node:20-alpine AS vite-build
 
-# Install dependencies
-RUN curl -sS https://getcomposer.org/installer | php \
-    && php composer.phar install --no-dev --optimize-autoloader
-
-# Apache config
-RUN a2enmod rewrite \
-    && sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
-
-# Permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
-
-EXPOSE 80
+    WORKDIR /app
+    
+    # Install Node dependencies
+    COPY package*.json ./
+    RUN npm ci
+    
+    # Copy project and build Vite assets
+    COPY . .
+    RUN npm run build
+    
+    
+    # ---------- Stage 2: PHP + Composer + Laravel ----------
+    FROM php:8.4-fpm-alpine
+    
+    # Install PHP extensions
+    RUN apk add --no-cache \
+        git unzip oniguruma-dev \
+        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev postgresql-dev \
+        && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
+    
+    RUN mkdir -p database \
+    && touch database/database.sqlite
+    
+    # Install Composer (copy from official Composer image)
+    COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+    
+    WORKDIR /var/www/html
+    
+    # Copy application files
+    COPY . .
+    
+    # ✅ Copy built Vite assets from previous stage
+    COPY --from=vite-build /app/public/build ./public/build
+    
+    # Install PHP dependencies for production
+    RUN composer install --no-dev --optimize-autoloader --no-interaction
+    
+    # Set correct permissions for Laravel
+    RUN chown -R www-data:www-data storage bootstrap/cache \
+        && chmod -R 775 storage bootstrap/cache
+    
+    EXPOSE 9000
+    
+    # ✅ Run with artisan serve on port 8080 (matches Railway default)
+    CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
+    
