@@ -16,13 +16,17 @@ FROM php:8.4-apache
 WORKDIR /var/www/html
 
 RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev \
-    libpng-dev libjpeg-dev libfreetype6-dev \
-    libonig-dev libxml2-dev \
+    git unzip \
+    libzip-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
     && docker-php-ext-configure gd \
-        --with-freetype \
-        --with-jpeg \
-    && docker-php-ext-install \
+        --with-freetype=/usr/include/ \
+        --with-jpeg=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) \
         pdo pdo_pgsql zip gd exif
 
 COPY . .
