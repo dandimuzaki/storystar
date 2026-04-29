@@ -20,7 +20,7 @@
             @endif
             <p>{{ \Carbon\Carbon::parse($post->published_at)->format('M d, Y') }}</p>
             <div class="flex gap-1 items-center">
-                <x-phosphor-hands-clapping-duotone class="w-6" />
+                <x-phosphor-hands-clapping-duotone class="w-8" />
                 <span>{{ $post->claps_count ?? 0 }}</span>
             </div>
         </div>
