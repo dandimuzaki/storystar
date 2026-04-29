@@ -21,10 +21,6 @@
         libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev postgresql-dev \
         && docker-php-ext-install pdo pdo_pgsql intl zip exif gd
     
-    RUN mkdir -p database \
-    && touch database/database.sqlite \
-    && chmod -R 775 database
-    
     # Install Composer (copy from official Composer image)
     COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
     
