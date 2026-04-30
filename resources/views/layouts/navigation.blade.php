@@ -1,7 +1,7 @@
 <nav x-data="{ open: false }" class="sticky top-0 bg-white border-b border-gray-100 z-800">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center lg:gap-16 gap-6">
+        <div class="grid grid-cols-[1fr_3fr_1fr] h-16 items-center lg:gap-10 gap-6">
             <!-- Logo -->
             <div class="shrink-0 flex items-center">
                 <a href="{{ route('dashboard') }}">
@@ -9,7 +9,7 @@
                 </a>
             </div>
 
-            <form class="flex-1" method="get" action="{{ route('result') }}">
+            <form class="mx-auto max-w-lg w-full" method="get" action="{{ route('result') }}">
                 @csrf
                 <div class="flex w-full">
                     <input placeholder="Search post or user" id="search" class="rounded-l-lg py-1 w-full"
@@ -21,7 +21,7 @@
                 </div>
             </form>
 
-            <div class="flex lg:gap-4 gap-2 items-center w-fit">
+            <div class="flex lg:gap-4 gap-2 items-center justify-end w-fit">
                 @auth
                     <a href={{ route('post.create') }}>
                         <x-primary-button>

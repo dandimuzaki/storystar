@@ -1,1 +1,1 @@
-<img src="/build/assets/logo.png" class="h-20" />
+<img src="/build/assets/logo-storystar.png" class="h-12" />
