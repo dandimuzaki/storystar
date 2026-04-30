@@ -26,10 +26,6 @@ COPY --from=vite-build /app/public/build /var/www/html/public/build
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-RUN php artisan config:clear \
- && php artisan cache:clear \
- && php artisan view:clear
-
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
