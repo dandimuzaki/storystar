@@ -7,7 +7,10 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npm run build
+RUN npm run build \
+ && echo "=== CHECK BUILD ===" \
+ && ls -la public \
+ && ls -la public/build || echo "NO BUILD FOUND 💀"
 
 # ---------- Stage 2: PHP ----------
 FROM php:8.4-fpm-alpine
