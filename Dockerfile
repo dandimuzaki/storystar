@@ -3,9 +3,15 @@ FROM node:20-alpine AS vite-build
 
 WORKDIR /app
 
-COPY . .
+# copy only package first (better caching)
+COPY package*.json ./
 RUN npm install
+
+# copy rest of project
+COPY . .
+
 RUN npm run build
+
 
 # ---------- Stage 2: PHP ----------
 FROM php:8.4-fpm-alpine
@@ -21,8 +27,8 @@ WORKDIR /var/www/html
 
 COPY . .
 
-# copy built assets
-COPY --from=vite-build /app/public/build /var/www/html/public/build
+# copy built assets (IMPORTANT)
+COPY --from=vite-build /app/public/build ./public/build
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
