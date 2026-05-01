@@ -3,15 +3,11 @@ FROM node:20-alpine AS vite-build
 
 WORKDIR /app
 
-# copy only package first (better caching)
 COPY package*.json ./
 RUN npm install
 
-# copy rest of project
 COPY . .
-
 RUN npm run build
-
 
 # ---------- Stage 2: PHP ----------
 FROM php:8.4-fpm-alpine
@@ -25,16 +21,17 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# ❗ Copy app FIRST
 COPY . .
 
-# copy built assets (IMPORTANT)
-COPY --from=vite-build /app/public/build ./public/build
+# ❗ THEN overwrite with built assets
+COPY --from=vite-build /app/public/build /var/www/html/public/build
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
-EXPOSE 9000
+EXPOSE 8080
 
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
