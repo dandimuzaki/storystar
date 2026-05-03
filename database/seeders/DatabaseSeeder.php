@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\Follower;
 use App\Models\Post;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -29,8 +30,30 @@ class DatabaseSeeder extends Seeder
             Category::create(['name' => $name]);
         }
 
-        // Create 3 users
-        User::factory(3)->create()->each(function ($user) use ($categoryMap) {
+        // Create my account
+        $myAccount = User::create([
+            'name' => 'Dandi Muzaki',
+            'username' => 'dandi_muzaki',
+            'bio' => fake()->paragraph(1),
+            'email' => 'dandimuzaki@gmail.com',
+            'password' => 'StoryStar123!'
+        ]);
+
+        // Create 5 posts in my account
+        Post::factory(5)->make()->each(function ($post) use ($myAccount, $categoryMap) {
+            $category = Category::inRandomOrder()->first();
+
+            $post->user_id = $myAccount->id;
+            $post->category_id = $category->id;
+            $post->save();
+
+            $imageUrl = $categoryMap[$category->name];
+
+            $post->addMediaFromUrl($imageUrl)->toMediaCollection('posts');
+        });
+
+        // Create 6 users
+        $users = User::factory(6)->create()->each(function ($user) use ($categoryMap) {
             // Each user has 5 posts
             Post::factory(5)->make()->each(function ($post) use ($user, $categoryMap) {
                 $category = Category::inRandomOrder()->first();
@@ -43,6 +66,24 @@ class DatabaseSeeder extends Seeder
 
                 $post->addMediaFromUrl($imageUrl)->toMediaCollection('posts');
             });
+        });
+
+        $users = $users->push($myAccount);
+
+        $users->each(function ($user) use ($users) {
+            // Pick random users to follow
+            $others = $users->where('id', '!=', $user->id);
+
+            $followings = $others->random(
+                min($others->count(), rand(1, 5))
+            );
+
+            foreach ($followings as $followedUser) {
+                Follower::firstOrCreate([
+                    'user_id' => $followedUser->id,
+                    'follower_id' => $user->id,
+                ]);
+            }
         });
     }
 }
